@@ -1,15 +1,12 @@
 from scipy.spatial import KDTree
 
-# from scipy.linalg import sqrtm as sqrtm
+from functools import partial
 
-from sklearn.cluster import OPTICS
+
 import jax
 from jax import numpy as jnp
-from miscelaneous import pack_mat
 
-
-# from scipy.linalg import sqrtm as sqrtm
-
+from sklearn import OPTICS
 
 from distances import jax_kl_dist
 
@@ -30,18 +27,19 @@ def embed_dataset(near_neighbors):
     return mean, cov, inv, inv_sqrt
 
 
-def kl_jax_scan(dataset, eps, min_pts, ecc_pts, xi=0.05):
+def kl_jax_scan(dataset, min_pts, ecc_pts, eps=jnp.inf, xi=0.05):
     kd = KDTree(dataset)
 
     near_neighbors = dataset[kd.query(x=dataset, k=ecc_pts)[1]]
 
     embeddings = embed_dataset(near_neighbors)
 
-    @jax.vmap
-    def calc_distances(embedding):
-        return vmapped_jax_dist(embedding, embeddings)
+    @partial(jax.vmap, in_axes = [0, None])
+    def calc_distances(embedding, eps=jnp.inf):
+        too_far = jnp.norm(embedding[0][None,:] - embeddings[0][:,:]) > eps
+        return jnp.where(too_far, jnp.inf, vmapped_jax_dist(embedding, embeddings))
 
-    dists = calc_distances(embeddings)
+    dists = calc_distances(embeddings, eps=eps)
     return jnp.array(
         OPTICS(
             min_samples=min_pts,
@@ -91,9 +89,10 @@ if __name__ == "__main__":
 
         embeddings = embed_dataset(near_neighbors)
 
-        @jax.vmap
-        def calc_distances(embedding):
-            return vmapped_jax_dist(embedding, embeddings)
+        @jax.vmap()
+        def calc_distances(embedding, eps=1e-4):
+            too_far = jnp.linalg.norm(embedding[0][None,:] - embeddings[0][:,:]) > eps
+            return jnp.where(too_far, jnp.inf, vmapped_jax_dist(embedding, embeddings))
 
         dists = calc_distances(embeddings)
         return dists
@@ -101,7 +100,7 @@ if __name__ == "__main__":
     num_trials = 100
     ed_times = []
     ld_times = []
-    num_list = [1000, 2000, 4000, 8000, 16000]
+    num_list = [1000, 2000, 4000]
 
     for num_points in num_list:
         data = random.uniform(random.key(0), shape=[num_points, 2])

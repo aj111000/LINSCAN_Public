@@ -41,7 +41,7 @@ def linscan_distance(dataset):
 num_trials = 100
 ed_times = []
 ld_times = []
-num_list = [1000, 2000, 4000, 8000, 16000]
+num_list = [1000, 2000, 4000, 8000]
 
 for num_points in num_list:
     data = random.uniform(random.key(0), shape=[num_points, 2])

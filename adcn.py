@@ -1,11 +1,10 @@
 import numpy as np
-import matplotlib.pyplot as plt
+
 from random import shuffle
 
 # import shapefile
 import math
 from scipy.spatial import KDTree
-import matplotlib.pyplot as plt
 import sklearn.datasets as datasets
 from collections import Counter
 
@@ -280,6 +279,8 @@ def crossing_lines():
 
 
 if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+
     # read data
     real_dataset = np.array(crossing_lines())
 
@@ -289,7 +290,7 @@ if __name__ == "__main__":
 
     # minpts_list = [2 ** (i + 2) for i in range(6)]
 
-    epsilons = 2 * [0.08]
+    epsilons = [0.08]
     minpts_list = [8]
 
     thresholds = [0]
