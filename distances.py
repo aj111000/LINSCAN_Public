@@ -1,6 +1,9 @@
 import numpy as np
 from numpy.linalg import norm
 
+import jax.numpy as jnp
+import jax
+
 # from scipy.linalg import sqrtm as sqrtm
 
 import ctypes
@@ -29,6 +32,7 @@ def gen_ref_kl_dist():
 
 def gen_c_kl_dist():
     array = ctypes.c_double * 11
+
     def convert(A, B):
         return array(*A.tolist()), array(*B.tolist())
 
@@ -37,4 +41,20 @@ def gen_c_kl_dist():
 
     def dist_func(x, y):
         return kl_dist(*convert(x, y))
+
     return dist_func
+
+
+@jax.jit
+def jax_kl_dist(x, y):
+    p1, cov1, inv1, inv_sqrt1 = x
+    p2, cov2, inv2, inv_sqrt2 = y
+
+    dist = (
+        1 / 2 * jnp.linalg.norm(inv_sqrt2 @ cov1 @ inv_sqrt2 - jnp.eye(2), ord="fro")
+        + 1 / 2 * jnp.linalg.norm(inv_sqrt1 @ cov2 @ inv_sqrt1 - jnp.eye(2), ord="fro")
+        + 1 / jnp.sqrt(2) * jnp.sqrt((p1 - p2).transpose() @ inv1 @ (p1 - p2))
+        + 1 / jnp.sqrt(2) * jnp.sqrt((p1 - p2).transpose() @ inv2 @ (p1 - p2))
+    )
+
+    return jax.nn.relu(dist)

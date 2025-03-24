@@ -145,7 +145,8 @@ def adcn(dataset, eps, minPts, threshold):
     C = [-1 for i in range(nPoints)]
     kd = KDTree(dataset)
 
-    ecc = lambda x: np.sqrt(1 - (x.b**2) / (x.a**2))
+    def ecc(x):
+        return np.sqrt(1 - (x.b**2) / (x.a**2))
 
     eccentricities = [
         ecc(calculate_sde(kd.query(dataset[i], k=minPts)[1], eps))
@@ -185,20 +186,14 @@ def adcn(dataset, eps, minPts, threshold):
                     inv_cov = inv_cov / np.linalg.norm(inv_cov, 2)
 
                     # sdem = calculate_sde(M_index, eps)
-                    may_in_sdem_ptlist = kd.query_ball_point(
-                        dataset[p1], 10 * eps
-                    )
+                    may_in_sdem_ptlist = kd.query_ball_point(dataset[p1], 10 * eps)
 
                     pts_in_sdem = []
                     mean = dataset[p]
                     for mmmmm in may_in_sdem_ptlist:
                         normalized = dataset[mmmmm] - mean
                         if (
-                            np.sqrt(
-                                np.transpose(normalized)
-                                @ inv_cov
-                                @ normalized
-                            )
+                            np.sqrt(np.transpose(normalized) @ inv_cov @ normalized)
                             < eps
                         ):
                             pts_in_sdem.append(mmmmm)
@@ -211,7 +206,8 @@ def adcn(dataset, eps, minPts, threshold):
                     if len(pts_in_sdem) >= minPts:
                         for t1 in pts_in_sdem:
                             L = np.cov(
-                                dataset[kd.query(dataset[t1], k=minPts)[1]], rowvar=False
+                                dataset[kd.query(dataset[t1], k=minPts)[1]],
+                                rowvar=False,
                             )
                             L_inv = np.linalg.inv(L)
                             _, temp_pca = np.linalg.eigh(L_inv)
@@ -293,7 +289,7 @@ if __name__ == "__main__":
 
     # minpts_list = [2 ** (i + 2) for i in range(6)]
 
-    epsilons = 2 * [.08]
+    epsilons = 2 * [0.08]
     minpts_list = [8]
 
     thresholds = [0]
@@ -306,7 +302,9 @@ if __name__ == "__main__":
 
     # thresholds = [.95]
 
-    ecc = lambda x: np.sqrt(1 - (x.b**2) / (x.a**2))
+    def ecc(x):
+        return np.sqrt(1 - (x.b**2) / (x.a**2))
+
     ind_list = [i for i in range(real_dataset.shape[0])]
 
     # ADCN method with dataset, eps and minpts
@@ -331,9 +329,6 @@ if __name__ == "__main__":
                 plt.scatter(dataset[:, 0], dataset[:, 1], c=typelist, marker=".")
                 plt.title("eps: " + str(eps) + ", minpts: " + str(minpts))
                 plt.show()
-
-
-                
 
                 # while len(eccentricities)>0:
                 #     cat = np.argmax([])

@@ -1,7 +1,9 @@
 from data_generation import gen_data
 import numpy as np
+
+import jax
+import jax.numpy as jnp
 import numpy.random as random
-from multiprocessing import Pool, cpu_count
 
 from trial import trial
 import time
@@ -11,6 +13,7 @@ from sklearn import metrics
 
 from miscelaneous import param_generator, normalize_datasets
 
+
 if __name__ == "__main__":
     st = time.time()
     # Number of train and test datasets
@@ -19,16 +22,14 @@ if __name__ == "__main__":
 
     num_trials = 500
 
-    core_param = cpu_count() - 1
-
     # Generate Samples
     temp = [gen_data(lin_clusts=10, iso_clusts=5, int_clusts=10) for i in range(N)]
-    train_datasets = [np.array(item[0]) for item in temp]
-    train_labels = [np.array(item[1]) for item in temp]
+    train_datasets = [jnp.array(item[0]) for item in temp]
+    train_labels = [jnp.array(item[1]) for item in temp]
 
     temp = [gen_data(lin_clusts=10, iso_clusts=5, int_clusts=10) for i in range(M)]
-    test_datasets = [np.array(item[0]) for item in temp]
-    test_labels = [np.array(item[1]) for item in temp]
+    test_datasets = [jnp.array(item[0]) for item in temp]
+    test_labels = [jnp.array(item[1]) for item in temp]
     del temp
 
     train_datasets = normalize_datasets(train_datasets)
@@ -43,10 +44,10 @@ if __name__ == "__main__":
 
     scores = []
 
-    with Pool(processes=min(num_trials, cpu_count(), core_param)) as pool:
-        scores = pool.map(
-            func=trial,
-            iterable=param_generator(
+    scores = list(
+        map(
+            trial,
+            param_generator(
                 train_datasets,
                 train_labels,
                 eps_range,
@@ -57,6 +58,7 @@ if __name__ == "__main__":
                 num_trials,
             ),
         )
+    )
 
     average_scores = [np.mean(samp[1]) for samp in scores]
 
@@ -64,7 +66,9 @@ if __name__ == "__main__":
 
     [eps, min_pts, threshold, ecc_pts, xi] = scores[idx][0]
 
-    test_scores = trial([test_datasets, test_labels, eps, min_pts, threshold, ecc_pts, xi])
+    test_scores = trial(
+        [test_datasets, test_labels, eps, min_pts, threshold, ecc_pts, xi]
+    )
 
     test_acc = np.mean(test_scores[1])
 
@@ -129,7 +133,9 @@ if __name__ == "__main__":
         label = optics_classifier.fit_predict(dataset)
 
         for cat in range(max(label)):
-            temp = np.array([dataset[i, :] for i in range(len(dataset)) if label[i] == cat])
+            temp = np.array(
+                [dataset[i, :] for i in range(len(dataset)) if label[i] == cat]
+            )
             if temp.size == 0:
                 continue
 

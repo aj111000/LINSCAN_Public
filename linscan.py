@@ -1,57 +1,134 @@
-import numpy as np
 from scipy.spatial import KDTree
 
 # from scipy.linalg import sqrtm as sqrtm
 
 from sklearn.cluster import OPTICS
+import jax
+from jax import numpy as jnp
+from miscelaneous import pack_mat
 
 
-from distances import gen_c_kl_dist
-from miscelaneous import pack_mat, sqrtm
+# from scipy.linalg import sqrtm as sqrtm
 
 
+from distances import jax_kl_dist
 
-def kl_embed_scan(dataset, eps, min_pts, ecc_pts, xi=0.05):
+
+vmapped_jax_dist = jax.vmap(jax_kl_dist, in_axes=(None, 0), out_axes=0)
+
+
+@jax.vmap
+@jax.jit
+def embed_dataset(near_neighbors):
+
+    cov = jnp.cov(near_neighbors, rowvar=False)
+    cov /= jnp.linalg.norm(cov)
+    mean = near_neighbors.mean(0)
+    inv = jnp.linalg.inv(cov)
+    inv_sqrt = jnp.linalg.cholesky(inv)
+
+    return mean, cov, inv, inv_sqrt
+
+
+def kl_jax_scan(dataset, eps, min_pts, ecc_pts, xi=0.05):
     kd = KDTree(dataset)
 
-    embeddings = []
-    for p in range(len(dataset)):
-        cluster = kd.query(x=dataset[p], k=ecc_pts)[1].tolist()
-        cov = np.cov(np.array([dataset[k] for k in cluster]), rowvar=False)
-        cov /= max(np.linalg.eig(cov)[0])
-        mean = np.mean(np.array([dataset[k] for k in cluster]), axis=0)
-        inv = (
-            1
-            / (cov[0, 0] * cov[1, 1] - cov[0, 1] * cov[0, 1])
-            * np.array([[cov[1, 1], -cov[0, 1]], [-cov[0, 1], cov[0, 0]]])
+    near_neighbors = dataset[kd.query(x=dataset, k=ecc_pts)[1]]
+
+    embeddings = embed_dataset(near_neighbors)
+
+    @jax.vmap
+    def calc_distances(embedding):
+        return vmapped_jax_dist(embedding, embeddings)
+
+    dists = calc_distances(embeddings)
+    return jnp.array(
+        OPTICS(
+            min_samples=min_pts,
+            metric="precomputed",
+            cluster_method="xi",
+            xi=xi,
         )
-        inv_sqrt = sqrtm(inv)
-
-        embeddings.append(
-            np.concatenate([mean, pack_mat(cov), pack_mat(inv), pack_mat(inv_sqrt)])
-        )
-    embeddings = np.array(embeddings)
-
-    return OPTICS(
-        min_samples=min_pts,
-        metric=gen_c_kl_dist(),
-        cluster_method="xi",
-        xi=xi,
-    ).fit(embeddings).labels_
+        .fit(dists)
+        .labels_
+    )
 
 
-def linscan(dataset, eps, min_pts, ecc_pts, threshold, xi):
-    typelist = kl_embed_scan(dataset, eps, min_pts, ecc_pts, xi)
+def linscan(dataset, eps, min_pts, ecc_pts, threshold, xi=0.05):
+    typelist = kl_jax_scan(dataset, eps, min_pts, ecc_pts, xi)
 
     for cat in range(max(typelist)):
-        temp = np.array(
-            [dataset[i, :] for i in range(len(dataset)) if typelist[i] == cat]
-        )
+        cat_inds = typelist == cat
+        temp = dataset[cat_inds, :]
         if temp.size == 0:
             continue
-        eigenvalues, eigenvectors = np.linalg.eig(np.cov(temp, rowvar=False))
+        eigenvalues, _ = jnp.linalg.eigh(jnp.cov(temp, rowvar=False))
 
         if min(eigenvalues) / max(eigenvalues) > threshold:
-            typelist = list(map(lambda x: -1 if x == cat else x, typelist))
+            typelist = jnp.where(cat_inds, -1, typelist)
 
     return typelist
+
+
+if __name__ == "__main__":
+    # Runtime comparison
+    from time import time
+    from jax import random
+    import matplotlib.pyplot as plt
+
+    @jax.jit
+    def euclidean_distance(dataset):
+        @jax.vmap
+        def calc_distances(point):
+            return jnp.linalg.norm(dataset - point[None, :], axis=-1)
+
+        return calc_distances(dataset)
+
+    def linscan_distance(dataset):
+        kd = KDTree(dataset)
+
+        near_neighbors = dataset[kd.query(x=dataset, k=20)[1]]
+
+        embeddings = embed_dataset(near_neighbors)
+
+        @jax.vmap
+        def calc_distances(embedding):
+            return vmapped_jax_dist(embedding, embeddings)
+
+        dists = calc_distances(embeddings)
+        return dists
+
+    num_trials = 100
+    ed_times = []
+    ld_times = []
+    num_list = [1000, 2000, 4000, 8000, 16000]
+
+    for num_points in num_list:
+        data = random.uniform(random.key(0), shape=[num_points, 2])
+
+        start = time()
+
+        for _ in range(num_trials):
+            ed = euclidean_distance(data).block_until_ready()
+
+        end = time()
+
+        elapsed = end - start
+
+        ed_times.append(elapsed / num_trials)
+
+        start = time()
+
+        for _ in range(num_trials):
+            ld = linscan_distance(data).block_until_ready()
+
+        end = time()
+
+        elapsed = end - start
+
+        ld_times.append(elapsed / num_trials)
+
+    plt.loglog(num_list, ed_times, label="Euclidean")
+    plt.loglog(num_list, ld_times, label="Linscan")
+    plt.legend()
+    plt.show()
