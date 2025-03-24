@@ -13,7 +13,7 @@ from miscelaneous import unpack_embedding
 
 
 def gen_ref_kl_dist():
-    # Do not use this implementation, as it is slow. It only exists to give a reference for what the C implementation does.
+    # Do not use this implementation, as it is slow. It only exists to give a reference for what the C and JAX implementations do.
     def kl_dist(x, y):
         p1, cov1, inv1, inv_sqrt1 = unpack_embedding(x)
         p2, cov2, inv2, inv_sqrt2 = unpack_embedding(y)
