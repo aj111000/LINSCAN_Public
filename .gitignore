@@ -2,4 +2,6 @@ linscan_c.so
 *.out
 
 
-ignore
+__pycache__
+
+.venv
