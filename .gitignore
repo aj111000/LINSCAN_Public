@@ -1,2 +1,7 @@
 linscan_c.so
 *.out
+
+
+__pycache__
+
+.venv

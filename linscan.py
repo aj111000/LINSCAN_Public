@@ -6,7 +6,7 @@ from functools import partial
 import jax
 from jax import numpy as jnp
 
-from sklearn import OPTICS
+from sklearn.cluster import OPTICS
 
 from distances import jax_kl_dist
 
@@ -34,12 +34,12 @@ def kl_jax_scan(dataset, min_pts, ecc_pts, eps=jnp.inf, xi=0.05):
 
     embeddings = embed_dataset(near_neighbors)
 
-    @partial(jax.vmap, in_axes = [0, None])
-    def calc_distances(embedding, eps=jnp.inf):
-        too_far = jnp.norm(embedding[0][None,:] - embeddings[0][:,:]) > eps
-        return jnp.where(too_far, jnp.inf, vmapped_jax_dist(embedding, embeddings))
+    @partial(jax.vmap, in_axes=[0, None])
+    def calc_distances(embedding, eps):
+        too_far = jnp.linalg.norm(embedding[0][None, :] - embeddings[0][:, :]) > eps
+        return jnp.where(too_far, 100 * eps, vmapped_jax_dist(embedding, embeddings))
 
-    dists = calc_distances(embeddings, eps=eps)
+    dists = calc_distances(embeddings, eps)
     return jnp.array(
         OPTICS(
             min_samples=min_pts,
@@ -89,9 +89,9 @@ if __name__ == "__main__":
 
         embeddings = embed_dataset(near_neighbors)
 
-        @jax.vmap()
+        @jax.vmap
         def calc_distances(embedding, eps=1e-4):
-            too_far = jnp.linalg.norm(embedding[0][None,:] - embeddings[0][:,:]) > eps
+            too_far = jnp.linalg.norm(embedding[0][None, :] - embeddings[0][:, :]) > eps
             return jnp.where(too_far, jnp.inf, vmapped_jax_dist(embedding, embeddings))
 
         dists = calc_distances(embeddings)
