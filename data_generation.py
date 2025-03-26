@@ -1,6 +1,7 @@
+import random
+
 import numpy as np
 import numpy.random as rand
-import random
 
 
 def gen_data(
@@ -161,9 +162,18 @@ def gen_data(
     return np.array(data), np.array(labels)
 
 
+def load_real_data():
+    import csv
+
+    with open("epicenters.xy", "r") as f:
+        data = np.array([tuple(map(float, l.split())) for l in f])
+
+    return data
+
+
 if __name__ == "__main__":
-    import numpy as np
     import matplotlib.pyplot as plt
+    import numpy as np
 
     data, labels = gen_data()
     data = np.array(data)
@@ -175,12 +185,3 @@ if __name__ == "__main__":
         data[:, 0], data[:, 1], c=labels, marker="o", s=(2 * 72.0 / fig1.dpi) ** 2
     )
     plt.show()
-
-
-def load_real_data():
-    import csv
-
-    with open("epicenters.xy", "r") as f:
-        x, y = zip(*csv.reader(f, delimeter=" "))
-
-    return x, y
