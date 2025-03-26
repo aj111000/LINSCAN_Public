@@ -175,3 +175,12 @@ if __name__ == "__main__":
         data[:, 0], data[:, 1], c=labels, marker="o", s=(2 * 72.0 / fig1.dpi) ** 2
     )
     plt.show()
+
+
+def load_real_data():
+    import csv
+
+    with open("epicenters.xy", "r") as f:
+        x, y = zip(*csv.reader(f, delimeter=" "))
+
+    return x, y

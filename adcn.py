@@ -36,8 +36,7 @@ def dis_two_point(pi, pj):
     return dis
 
 
-def calculate_sde(ptindex_array, eps):
-    pt_array = dataset[ptindex_array]
+def calculate_sde(pt_array, eps):
     center_pt = pt_array.mean(axis=0)
     pt_trans = pt_array - center_pt
     tempA = np.square(pt_trans)
@@ -127,7 +126,7 @@ def union(lst1, lst2):
     return final_list
 
 
-def pts_in_SDE(pts_index, SDE):
+def pts_in_SDE(dataset, pts_index, SDE):
     in_list = []
     for ptindex in pts_index:
         pt = dataset[ptindex]
@@ -148,7 +147,7 @@ def adcn(dataset, eps, minPts, threshold):
         return np.sqrt(1 - (x.b**2) / (x.a**2))
 
     eccentricities = [
-        ecc(calculate_sde(kd.query(dataset[i], k=minPts)[1], eps))
+        ecc(calculate_sde(dataset[kd.query(dataset[i], k=minPts)[1]], eps))
         for i in vPoints.unvisitedlist
     ]
 
@@ -157,9 +156,12 @@ def adcn(dataset, eps, minPts, threshold):
         p = np.argmax(eccentricities)
         vPoints.visit(p)
         N_index = kd.query(dataset[p], k=minPts)[1]
-        sden = calculate_sde(N_index, eps)
+
+        Ns = dataset[N_index]
+
+        sden = calculate_sde(Ns, eps)
         may_in_sden_ptlist = kd.query_ball_point(dataset[p], sden.a)
-        pts_in_sden = pts_in_SDE(may_in_sden_ptlist, sden)
+        pts_in_sden = pts_in_SDE(dataset, may_in_sden_ptlist, sden)
 
         if len(pts_in_sden) >= minPts:
             eccentricities[p] = 0

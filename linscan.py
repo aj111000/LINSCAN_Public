@@ -1,12 +1,12 @@
 from scipy.spatial import KDTree
 
 from functools import partial
-
+from math import sqrt
 
 import jax
 from jax import numpy as jnp
 
-from sklearn.cluster import OPTICS
+from sklearn.cluster import OPTICS, HDBSCAN
 
 from distances import jax_kl_dist
 
@@ -27,23 +27,25 @@ def embed_dataset(near_neighbors):
     return mean, cov, inv, inv_sqrt
 
 
-def kl_jax_scan(dataset, min_pts, ecc_pts, eps=jnp.inf, xi=0.05):
+def kl_jax_scan(dataset, min_pts, ecc_pts, eps=10.0, xi=0.05):
     kd = KDTree(dataset)
 
     near_neighbors = dataset[kd.query(x=dataset, k=ecc_pts)[1]]
 
     embeddings = embed_dataset(near_neighbors)
 
-    @partial(jax.vmap, in_axes=[0, None])
-    def calc_distances(embedding, eps):
-        too_far = jnp.linalg.norm(embedding[0][None, :] - embeddings[0][:, :]) > eps
-        return jnp.where(too_far, 100 * eps, vmapped_jax_dist(embedding, embeddings))
+    @jax.vmap
+    def calc_distances(embedding):
+        return vmapped_jax_dist(embedding, embeddings)
 
-    dists = calc_distances(embeddings, eps)
+    dists = calc_distances(embeddings) / 2
+
+    dists = dists + dists.transpose()
     return jnp.array(
         OPTICS(
             min_samples=min_pts,
             metric="precomputed",
+            max_eps=eps * sqrt(2),
             cluster_method="xi",
             xi=xi,
         )
@@ -53,7 +55,7 @@ def kl_jax_scan(dataset, min_pts, ecc_pts, eps=jnp.inf, xi=0.05):
 
 
 def linscan(dataset, eps, min_pts, ecc_pts, threshold, xi=0.05):
-    typelist = kl_jax_scan(dataset, eps, min_pts, ecc_pts, xi)
+    typelist = kl_jax_scan(dataset, min_pts, ecc_pts, eps=eps, xi=xi)
 
     for cat in range(max(typelist)):
         cat_inds = typelist == cat
@@ -90,9 +92,8 @@ if __name__ == "__main__":
         embeddings = embed_dataset(near_neighbors)
 
         @jax.vmap
-        def calc_distances(embedding, eps=1e-4):
-            too_far = jnp.linalg.norm(embedding[0][None, :] - embeddings[0][:, :]) > eps
-            return jnp.where(too_far, jnp.inf, vmapped_jax_dist(embedding, embeddings))
+        def calc_distances(embedding):
+            return vmapped_jax_dist(embedding, embeddings)
 
         dists = calc_distances(embeddings)
         return dists
