@@ -162,26 +162,29 @@ def gen_data(
     return np.array(data), np.array(labels)
 
 
-def load_real_data():
-    import csv
+def load_real_data(x_min, x_max, y_min, y_max):
 
     with open("epicenters.xy", "r") as f:
         data = np.array([tuple(map(float, l.split())) for l in f])
 
-    return data
+    filt = (
+        (x_min < data[:, 0])
+        * (data[:, 0] < x_max)
+        * (y_min < data[:, 1])
+        * (data[:, 1] < y_max)
+    )
+
+    return data[filt]
 
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     import numpy as np
 
-    data, labels = gen_data()
-    data = np.array(data)
+    data = load_real_data(10, 300, 20, 200)
     fig1 = plt.figure()
     ax = fig1.add_subplot(111)
     ax.set_aspect("equal", adjustable="box")
 
-    plt.scatter(
-        data[:, 0], data[:, 1], c=labels, marker="o", s=(2 * 72.0 / fig1.dpi) ** 2
-    )
+    plt.scatter(data[:, 0], data[:, 1], marker=".", s=(2 * 72.0 / fig1.dpi) ** 2)
     plt.show()

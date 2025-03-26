@@ -1,4 +1,4 @@
-from data_generation import gen_data
+from data_generation import load_real_data
 import numpy as np
 
 import jax
@@ -19,22 +19,14 @@ from linscan import linscan
 
 if __name__ == "__main__":
 
-    data, labels = gen_data(
-        lin_clusts=10,
-        lin_num=200,
-        lin_R=2,
-        int_clusts=10,
-        int_num=200,
-        int_R=2,
-        iso_clusts=5,
-        iso_num=100,
-        iso_R=10,
-        noise_num=500,
-        x_min=-100,
-        x_max=100,
-        y_min=-100,
-        y_max=100,
-    )
+    data = load_real_data(0, 80, 110, 200)
+    print("Number of points: ", data.shape[0])
+    fig1 = plt.figure()
+    ax = fig1.add_subplot(111)
+    ax.set_aspect("equal", adjustable="box")
+
+    plt.scatter(data[:, 0], data[:, 1], marker=".", s=(2 * 72.0 / fig1.dpi) ** 2)
+    plt.show()
 
     threshold = 0.5
     linscan_eps = np.inf
