@@ -19,7 +19,7 @@ from linscan import linscan
 
 if __name__ == "__main__":
 
-    data = load_real_data(0, 80, 110, 200)
+    data = load_real_data(0, 65, 110, 120)
     print("Number of points: ", data.shape[0])
     fig1 = plt.figure()
     ax = fig1.add_subplot(111)
