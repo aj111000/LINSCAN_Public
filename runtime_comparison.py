@@ -41,11 +41,13 @@ def linscan_distance(dataset):
 num_trials = 100
 ed_times = []
 ld_times = []
-num_list = [1000, 2000, 4000, 8000]
+num_list = [1000, 2000, 4000, 8000, 16000]
 
 for num_points in num_list:
     data = random.uniform(random.key(0), shape=[num_points, 2])
 
+    # Have to run each function at least once before timing to compile the JAX portions
+    ed = euclidean_distance(data).block_until_ready()
     start = time()
 
     for _ in range(num_trials):
@@ -56,6 +58,8 @@ for num_points in num_list:
     elapsed = end - start
 
     ed_times.append(elapsed / num_trials)
+
+    ld = linscan_distance(data).block_until_ready()
 
     start = time()
 
@@ -69,6 +73,8 @@ for num_points in num_list:
     ld_times.append(elapsed / num_trials)
 
 plt.loglog(num_list, ed_times, label="Euclidean")
-plt.loglog(num_list, ld_times, label="Linscan")
+plt.loglog(num_list, ld_times, label="LINSCAN")
 plt.legend()
+plt.xlabel("Number of points")
+plt.ylabel("Runtime")
 plt.show()

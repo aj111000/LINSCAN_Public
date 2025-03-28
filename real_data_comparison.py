@@ -25,38 +25,44 @@ if __name__ == "__main__":
     ax = fig1.add_subplot(111)
     ax.set_aspect("equal", adjustable="box")
 
-    plt.scatter(data[:, 0], data[:, 1], marker=".", s=(2 * 72.0 / fig1.dpi) ** 2)
+    plt.scatter(data[:, 0], data[:, 1], marker=".", s=1)
     plt.show()
 
-    threshold = 0.5
+    threshold = 1.0
     linscan_eps = np.inf
     linscan_min_pts = 100
-    linscan_ecc_pts = 50
+    linscan_ecc_pts = 30
 
     optics_min_pts = linscan_min_pts
 
-    adcn_eps = 5.0
+    adcn_eps = 4.0
     adcn_min_pts = linscan_min_pts
 
-    linscan_labels = linscan(
-        data,
-        min_pts=linscan_min_pts,
-        ecc_pts=linscan_ecc_pts,
-        eps=linscan_eps,
-        threshold=threshold,
-    )
+    # linscan_labels = linscan(
+    #     data,
+    #     min_pts=linscan_min_pts,
+    #     ecc_pts=linscan_ecc_pts,
+    #     eps=linscan_eps,
+    #     threshold=threshold,
+    #     xi=0.01,
+    # )
 
     optics_labels = jnp.array(
         OPTICS(
             min_samples=optics_min_pts,
             cluster_method="xi",
             max_eps=linscan_eps,
+            xi=0.01,
         )
         .fit(data)
         .labels_
     )
+    # optics_labels = linscan_labels
+    linscan_labels = optics_labels
 
-    adcn_labels = jnp.array(adcn(data, adcn_eps, adcn_min_pts, threshold))
+    # adcn_labels = jnp.array(adcn(data, adcn_eps, adcn_min_pts, threshold))
+
+    adcn_labels = linscan_labels
 
     max_val = max(linscan_labels.max(), optics_labels.max(), adcn_labels.max())
 

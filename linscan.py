@@ -9,6 +9,7 @@ from jax import numpy as jnp
 from sklearn.cluster import OPTICS, HDBSCAN
 
 from distances import jax_kl_dist
+import matplotlib.pyplot as plt
 
 
 vmapped_jax_dist = jax.vmap(jax_kl_dist, in_axes=(None, 0), out_axes=0)
@@ -41,17 +42,23 @@ def kl_jax_scan(dataset, min_pts, ecc_pts, eps=10.0, xi=0.05):
     dists = calc_distances(embeddings) / 2
 
     dists = dists + dists.transpose()
-    return jnp.array(
-        OPTICS(
-            min_samples=min_pts,
-            metric="precomputed",
-            max_eps=eps * sqrt(2),
-            cluster_method="xi",
-            xi=xi,
-        )
-        .fit(dists)
-        .labels_
+    clust = OPTICS(
+        min_samples=min_pts,
+        metric="precomputed",
+        max_eps=eps * sqrt(2),
+        cluster_method="xi",
+        xi=xi,
+    ).fit(dists)
+    labs = jnp.array(clust.labels_)
+    plt.scatter(
+        jnp.arange(len(clust.reachability_)),
+        clust.reachability_[clust.ordering_],
+        s=1,
+        marker=",",
+        c=labs[clust.ordering_],
     )
+    plt.show()
+    return labs
 
 
 def linscan(dataset, eps, min_pts, ecc_pts, threshold, xi=0.05):
