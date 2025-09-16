@@ -1,6 +1,7 @@
 linscan_c.so
 *.out
-
+*.DS_Store*
+*.png
 
 __pycache__
 
