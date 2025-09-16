@@ -20,30 +20,30 @@ from linscan import linscan
 if __name__ == "__main__":
 
     data, labels = gen_data(
-        lin_clusts=10,
+        lin_clusts=20,
         lin_num=200,
         lin_R=2,
-        int_clusts=10,
+        int_clusts=20,
         int_num=200,
         int_R=2,
-        iso_clusts=5,
+        iso_clusts=9,
         iso_num=100,
         iso_R=10,
         noise_num=500,
-        x_min=-100,
-        x_max=100,
-        y_min=-100,
-        y_max=100,
+        x_min=-150,
+        x_max=150,
+        y_min=-150,
+        y_max=150,
     )
 
     threshold = 0.5
     linscan_eps = np.inf
     linscan_min_pts = 100
-    linscan_ecc_pts = 50
+    linscan_ecc_pts = 20
 
     optics_min_pts = linscan_min_pts
 
-    adcn_eps = 5.0
+    adcn_eps = 3.0
     adcn_min_pts = linscan_min_pts
 
     linscan_labels = linscan(
