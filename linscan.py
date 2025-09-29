@@ -5,7 +5,7 @@ import jax
 import matplotlib.pyplot as plt
 from jax import numpy as jnp
 from scipy.spatial import KDTree
-from sklearn.cluster import HDBSCAN, OPTICS
+from xlearn.cluster import HDBSCAN, OPTICS
 
 from distances import jax_kl_dist
 
@@ -30,7 +30,7 @@ def kl_jax_scan(dataset, min_pts, ecc_pts, eps=10.0, xi=0.05):
 
     near_neighbors = dataset[kd.query(x=dataset, k=ecc_pts)[1]]
 
-    embeddings = embed_dataset(near_neighbors)
+    embeddings = embed_dataset(jnp.array(near_neighbors))
 
     @jax.vmap
     def calc_distances(embedding):
@@ -59,8 +59,10 @@ def kl_jax_scan(dataset, min_pts, ecc_pts, eps=10.0, xi=0.05):
 
 
 def linscan(dataset, eps, min_pts, ecc_pts, threshold, xi=0.05):
+    data_len = dataset.shape[0]
     typelist = kl_jax_scan(dataset, min_pts, ecc_pts, eps=eps, xi=xi)
 
+    assert len(typelist) == data_len
     for cat in range(max(typelist)):
         cat_inds = typelist == cat
         temp = dataset[cat_inds, :]
@@ -70,6 +72,7 @@ def linscan(dataset, eps, min_pts, ecc_pts, threshold, xi=0.05):
 
         if min(eigenvalues) / max(eigenvalues) > threshold:
             typelist = jnp.where(cat_inds, -1, typelist)
+    assert len(typelist) == data_len
 
     return typelist
 

@@ -13,6 +13,7 @@ ipython_pygments_lexers==1.1.1
 jax==0.7.2
 jax-cuda12-pjrt==0.7.2
 jax-cuda12-plugin==0.7.2
+jax-sklearn==0.1.0
 jaxlib==0.7.2
 jedi==0.19.2
 joblib==1.5.2

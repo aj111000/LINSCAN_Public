@@ -1,21 +1,15 @@
-from data_generation import gen_data
-import numpy as np
-
 import jax
 import jax.numpy as jnp
-import numpy.random as random
-
 import matplotlib.pyplot as plt
+import numpy as np
+import numpy.random as random
+from xlearn.cluster import OPTICS
 
 from adcn import adcn
-
-
-from sklearn.cluster import OPTICS
-
+from data_generation import gen_data
 
 # from adcn import adcn
 from linscan import linscan
-
 
 if __name__ == "__main__":
 

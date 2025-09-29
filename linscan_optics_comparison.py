@@ -5,9 +5,9 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import numpy.random as random
-import sklearn as skl
-from sklearn import metrics
+import xlearn as skl
 from tqdm import tqdm
+from xlearn import metrics
 
 from data_generation import gen_data
 from miscelaneous import normalize_datasets, param_generator
@@ -16,10 +16,10 @@ from trial import trial
 if __name__ == "__main__":
     st = time.time()
     # Number of train and test datasets
-    N = 100
-    M = 400
+    N = 10
+    M = 40
 
-    num_trials = 1000
+    num_trials = 500
 
     # Generate Samples
     temp = [gen_data(lin_clusts=10, iso_clusts=5, int_clusts=10) for i in range(N)]
@@ -36,9 +36,9 @@ if __name__ == "__main__":
 
     # Iterations
     eps_range = [0.7, 0.7]
-    min_pts_range = [10, 80]
+    min_pts_range = [15, 80]
     threshold_range = [0, 1.0]
-    ecc_pts_range = [10, 60]
+    ecc_pts_range = [15, 60]
     xi_range = [0.015, 0.06]
 
     scores = []

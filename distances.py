@@ -1,15 +1,13 @@
+import ctypes
+
+import jax
+import jax.numpy as jnp
 import numpy as np
 from numpy.linalg import norm
 
-import jax.numpy as jnp
-import jax
+from miscelaneous import unpack_embedding
 
 # from scipy.linalg import sqrtm as sqrtm
-
-import ctypes
-
-
-from miscelaneous import unpack_embedding
 
 
 def gen_ref_kl_dist():
@@ -57,4 +55,6 @@ def jax_kl_dist(x, y):
         + 1 / jnp.sqrt(2) * jnp.sqrt((p1 - p2).transpose() @ inv2 @ (p1 - p2))
     )
 
-    return jax.nn.relu(dist)
+    return jax.nn.relu(
+        dist
+    )  # Due to numerical instability for very close points, we can get an output that is slightly negative (e.g. -1e-14) which causes problems in the later OPTICS clustering

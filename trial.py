@@ -1,5 +1,6 @@
+from xlearn.metrics import adjusted_rand_score
+
 from linscan import linscan
-from sklearn.metrics import adjusted_rand_score
 
 
 def trial(args):
