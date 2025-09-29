@@ -1,26 +1,24 @@
-from data_generation import gen_data
-import numpy as np
+import datetime
+import time
 
 import jax
 import jax.numpy as jnp
+import numpy as np
 import numpy.random as random
-
-from trial import trial
-import time
-import datetime
 import sklearn as skl
 from sklearn import metrics
 
-from miscelaneous import param_generator, normalize_datasets
-
+from data_generation import gen_data
+from miscelaneous import normalize_datasets, param_generator
+from trial import trial
 
 if __name__ == "__main__":
     st = time.time()
     # Number of train and test datasets
-    N = 10
-    M = 40
+    N = 100
+    M = 400
 
-    num_trials = 500
+    num_trials = 10000
 
     # Generate Samples
     temp = [gen_data(lin_clusts=10, iso_clusts=5, int_clusts=10) for i in range(N)]
