@@ -16,10 +16,10 @@ from trial import trial
 if __name__ == "__main__":
     st = time.time()
     # Number of train and test datasets
-    N = 1
-    M = 4
+    N = 100
+    M = 400
 
-    num_trials = 10
+    num_trials = 1000
 
     # Generate Samples
     temp = [gen_data(lin_clusts=10, iso_clusts=5, int_clusts=10) for i in range(N)]
