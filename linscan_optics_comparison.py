@@ -7,6 +7,7 @@ import numpy as np
 import numpy.random as random
 import sklearn as skl
 from sklearn import metrics
+from tqdm import tqdm
 
 from data_generation import gen_data
 from miscelaneous import normalize_datasets, param_generator
@@ -15,10 +16,10 @@ from trial import trial
 if __name__ == "__main__":
     st = time.time()
     # Number of train and test datasets
-    N = 100
-    M = 400
+    N = 1
+    M = 4
 
-    num_trials = 10000
+    num_trials = 10
 
     # Generate Samples
     temp = [gen_data(lin_clusts=10, iso_clusts=5, int_clusts=10) for i in range(N)]
@@ -43,18 +44,21 @@ if __name__ == "__main__":
     scores = []
 
     scores = list(
-        map(
-            trial,
-            param_generator(
-                train_datasets,
-                train_labels,
-                eps_range,
-                min_pts_range,
-                threshold_range,
-                ecc_pts_range,
-                xi_range,
-                num_trials,
+        tqdm(
+            map(
+                trial,
+                param_generator(
+                    train_datasets,
+                    train_labels,
+                    eps_range,
+                    min_pts_range,
+                    threshold_range,
+                    ecc_pts_range,
+                    xi_range,
+                    num_trials,
+                ),
             ),
+            total=num_trials,
         )
     )
 
@@ -69,6 +73,7 @@ if __name__ == "__main__":
     )
 
     test_acc = np.mean(test_scores[1])
+    test_std = np.std(test_scores[1])
 
     et = time.time()
     elapsed = et - st
@@ -76,8 +81,8 @@ if __name__ == "__main__":
     print("LINSCAN:\n")
     print(scores[idx][0])
     # print([scores[idx][1][0], scores[idx][2][0]])
-    print(average_scores[idx])
-    print(test_acc)
+    print(f"{average_scores[idx]}")
+    print(f"{test_acc} +/- {2 * test_std}")
 
     # OPTICS
 
@@ -86,7 +91,7 @@ if __name__ == "__main__":
     def gen_rand(range):
         return random.uniform(low=range[0], high=range[1])
 
-    for _ in range(num_trials):
+    for _ in tqdm(range(num_trials)):
         # point_scores = []
         # clust_scores = []
         opt_scores = []
@@ -146,7 +151,8 @@ if __name__ == "__main__":
     optics_test_scores = [[min_pts, threshold], opt_scores]
 
     optics_test_acc = np.mean(opt_scores)
+    optics_test_std = np.std(opt_scores)
     print("\nOptics:\n")
     print(optics_scores[optics_idx][0])
     print(optics_average_scores[optics_idx])
-    print(optics_test_acc)
+    print(f"{optics_test_acc} +/- {2 * optics_test_std}")

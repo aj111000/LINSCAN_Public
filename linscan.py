@@ -1,16 +1,13 @@
-from scipy.spatial import KDTree
-
 from functools import partial
 from math import sqrt
 
 import jax
+import matplotlib.pyplot as plt
 from jax import numpy as jnp
-
-from sklearn.cluster import OPTICS, HDBSCAN
+from scipy.spatial import KDTree
+from sklearn.cluster import HDBSCAN, OPTICS
 
 from distances import jax_kl_dist
-import matplotlib.pyplot as plt
-
 
 vmapped_jax_dist = jax.vmap(jax_kl_dist, in_axes=(None, 0), out_axes=0)
 
@@ -50,14 +47,14 @@ def kl_jax_scan(dataset, min_pts, ecc_pts, eps=10.0, xi=0.05):
         xi=xi,
     ).fit(dists)
     labs = jnp.array(clust.labels_)
-    plt.scatter(
-        jnp.arange(len(clust.reachability_)),
-        clust.reachability_[clust.ordering_],
-        s=1,
-        marker=",",
-        c=labs[clust.ordering_],
-    )
-    plt.show()
+    # plt.scatter(
+    #     jnp.arange(len(clust.reachability_)),
+    #     clust.reachability_[clust.ordering_],
+    #     s=1,
+    #     marker=",",
+    #     c=labs[clust.ordering_],
+    # )
+    # plt.show()
     return labs
 
 
@@ -80,8 +77,9 @@ def linscan(dataset, eps, min_pts, ecc_pts, threshold, xi=0.05):
 if __name__ == "__main__":
     # Runtime comparison
     from time import time
-    from jax import random
+
     import matplotlib.pyplot as plt
+    from jax import random
 
     @jax.jit
     def euclidean_distance(dataset):
